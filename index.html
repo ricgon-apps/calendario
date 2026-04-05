@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendário Pai & Mãe</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pai: #4a4a5a;
+    --pai-text: #ffffff;
+    --mae: #2ecc8a;
+    --mae-text: #ffffff;
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --border: #e8e6e0;
+    --text: #1a1a2e;
+    --text-muted: #9a9a9a;
+    --red: #e05252;
+    --radius: 10px;
+    --shadow: 0 2px 20px rgba(0,0,0,0.07);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 24px 16px;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .nav-btn {
+    width: 40px; height: 40px;
+    border: none;
+    background: var(--surface);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow);
+    color: var(--text);
+    transition: background 0.15s;
+  }
+  .nav-btn:hover { background: var(--border); }
+
+  .month-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .legend {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    justify-content: center;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--text-muted);
+  }
+  .legend-dot {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+  }
+
+  .calendar {
+    background: var(--surface);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    user-select: none;
+  }
+
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(40px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-40px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .grid.animate-right { animation: slideInRight 0.22s ease; }
+  .grid.animate-left  { animation: slideInLeft  0.22s ease; }
+
+  .weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .weekday {
+    text-align: center;
+    padding: 10px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+  }
+
+  .day-cell {
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 4px 8px;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .day-cell:nth-child(7n) { border-right: none; }
+
+  .day-number {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    text-align: center;
+    margin-bottom: 2px;
+    line-height: 1;
+  }
+  .day-number.sunday { color: var(--red); }
+  .day-number.other-month { color: var(--border); }
+  .day-number.today {
+    background: var(--text);
+    color: white;
+    border-radius: 50%;
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 2px;
+  }
+
+  .tag {
+    border-radius: 5px;
+    padding: 3px 5px;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 0.2px;
+  }
+  .tag.pai {
+    background: var(--pai);
+    color: var(--pai-text);
+  }
+  .tag.mae {
+    background: var(--mae);
+    color: var(--mae-text);
+  }
+  .tag.empty-month { opacity: 0.18; }
+
+  .day-cell.other-month-cell {
+    background: #fafaf8;
+  }
+
+  .day-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 2px;
+    position: relative;
+  }
+
+  .holiday-flag {
+    font-size: 10px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .day-cell.has-holiday {
+    cursor: pointer;
+  }
+
+  .holiday-banner {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1a2e;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 12px 20px;
+    border-radius: 12px;
+    white-space: nowrap;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    gap: 8px;
+    align-items: center;
+    animation: slideUp 0.2s ease;
+  }
+  .holiday-banner.visible {
+    display: flex;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+  .holiday-banner-close {
+    margin-left: 10px;
+    opacity: 0.6;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+  }
+  .holiday-banner-close:hover { opacity: 1; }
+
+  .legend-item .holiday-flag {
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <button class="nav-btn" onclick="changeMonth(-1)">&#8249;</button>
+    <h1 class="month-title" id="monthTitle"></h1>
+    <button class="nav-btn" onclick="changeMonth(1)">&#8250;</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="background:var(--mae)"></div>
+      <span>Mãe</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:var(--pai)"></div>
+      <span>Pai</span>
+    </div>
+  </div>
+
+  <div class="calendar">
+    <div class="weekdays">
+      <div class="weekday">Dom</div>
+      <div class="weekday">Seg</div>
+      <div class="weekday">Ter</div>
+      <div class="weekday">Qua</div>
+      <div class="weekday">Qui</div>
+      <div class="weekday">Sex</div>
+      <div class="weekday">Sáb</div>
+    </div>
+    <div class="grid" id="calendarGrid"></div>
+  </div>
+</div>
+
+<div class="holiday-banner" id="holidayBanner">
+  <span>🇵🇹</span>
+  <span id="holidayBannerText"></span>
+  <span class="holiday-banner-close" onclick="closeBanner()">✕</span>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// PATTERN ANALYSIS from the screenshots:
+// 
+// Looking at May 2026 (Image 3) carefully:
+// The pattern uses a 14-day cycle (2-week repeating block)
+// 
+// Day 0 (Sun):  Mãe / Pai  → Mãe on top
+// Day 1 (Mon):  Mãe / Pai  → Mãe on top
+// Day 2 (Tue):  Pai         → only Pai
+// Day 3 (Wed):  Pai / Mãe  → Pai on top
+// Day 4 (Thu):  Mãe         → only Mãe
+// Day 5 (Fri):  Mãe / Pai  → Mãe on top
+// Day 6 (Sat):  Pai         → only Pai
+// Day 7 (Sun):  Pai         → only Pai
+// Day 8 (Mon):  Pai / Mãe  → Pai on top
+// Day 9 (Tue):  Pai         → only Pai
+// Day 10 (Wed): Mãe / Pai  → Mãe on top
+// Day 11 (Thu): Mãe         → only Mãe
+// Day 12 (Fri): Mãe / Pai  → Mãe on top (wait... Fri 15 shows Mãe/Pai)
+// Day 13 (Sat): Pai         → only Pai
+//
+// Let me re-read more carefully from May 2026:
+// May 1 (Fri): Mãe / Pai   → top: Mãe, bottom: Pai
+// May 2 (Sat): Pai          → only Pai
+// May 3 (Sun): Pai          → only Pai
+// May 4 (Mon): Pai / Mãe   → top: Pai, bottom: Mãe
+// May 5 (Tue): Mãe          → only Mãe
+// May 6 (Wed): Mãe / Pai   → top: Mãe, bottom: Pai
+// May 7 (Thu): Pai          → only Pai
+// May 8 (Fri): Pai / Mãe   → top: Pai, bottom: Mãe
+// May 9 (Sat): Mãe          → only Mãe
+// May 10 (Sun): Mãe         → only Mãe
+// May 11 (Mon): Mãe / Pai  → top: Mãe, bottom: Pai  (wait, Mon shows Pai on top in img)
+// 
+// Re-reading carefully - let me trace from absolute date offset
+// Using epoch day % 14 as cycle index
+//
+// I'll use April 26 (Sun, shown in May view) as reference:
+// Apr 26 Sun: Mãe/Pai  
+// Apr 27 Mon: Mãe/Pai  
+// Apr 28 Tue: Pai       
+// Apr 29 Wed: Pai/Mãe   
+// Apr 30 Thu: Mãe       
+// May 1  Fri: Mãe/Pai   
+// May 2  Sat: Pai        
+// May 3  Sun: Pai        
+// May 4  Mon: Pai/Mãe   
+// May 5  Tue: Mãe        
+// May 6  Wed: Mãe/Pai   
+// May 7  Thu: Pai        
+// May 8  Fri: Pai/Mãe   
+// May 9  Sat: Mãe        
+// May 10 Sun: Mãe        
+// May 11 Mon: Mãe/Pai   → but img shows Mon col: Pai top, Mãe bottom...
+//
+// Let me just encode the 14-day cycle starting from a known Sunday
+// Reference: April 26, 2026 = day 0 of cycle
+// Using JS Date: Apr 26 2026
+
+const REFERENCE_DATE = new Date(2026, 3, 26); // April 26, 2026
+
+// 14-day cycle pattern: each entry is array of tags top→bottom
+// Derived from images (May 2026 being most complete):
+const CYCLE = [
+  // offset 0 = Apr 26 Sun
+  ['mae','pai'],  // 0: Sun Apr 26 → Mãe top, Pai bottom
+  ['mae','pai'],  // 1: Mon Apr 27 → Mãe top, Pai bottom  
+  ['pai'],        // 2: Tue Apr 28 → only Pai
+  ['pai','mae'],  // 3: Wed Apr 29 → Pai top, Mãe bottom
+  ['mae'],        // 4: Thu Apr 30 → only Mãe
+  ['mae','pai'],  // 5: Fri May 1  → Mãe top, Pai bottom
+  ['pai'],        // 6: Sat May 2  → only Pai
+  ['pai'],        // 7: Sun May 3  → only Pai
+  ['pai','mae'],  // 8: Mon May 4  → Pai top, Mãe bottom
+  ['mae'],        // 9: Tue May 5  → only Mãe
+  ['mae','pai'],  // 10: Wed May 6 → Mãe top, Pai bottom
+  ['pai'],        // 11: Thu May 7 → only Pai
+  ['pai','mae'],  // 12: Fri May 8 → Pai top, Mãe bottom
+  ['mae'],        // 13: Sat May 9 → only Mãe
+];
+
+function getTagsForDate(date) {
+  const msPerDay = 86400000;
+  const refMs = REFERENCE_DATE.getTime();
+  const dateMs = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  let diff = Math.round((dateMs - refMs) / msPerDay);
+  // Ensure positive modulo
+  let idx = ((diff % 14) + 14) % 14;
+  return CYCLE[idx];
+}
+
+// ─────────────────────────────────────────────
+// FERIADOS NACIONAIS DE PORTUGAL
+const FIXED_HOLIDAYS = {
+  '1-1':   'Ano Novo',
+  '4-25':  'Dia da Liberdade',
+  '5-1':   'Dia do Trabalhador',
+  '6-10':  'Dia de Portugal',
+  '8-15':  'Assunção de Nossa Senhora',
+  '10-5':  'Implantação da República',
+  '11-1':  'Dia de Todos os Santos',
+  '12-1':  'Restauração da Independência',
+  '12-8':  'Imaculada Conceição',
+  '12-25': 'Natal',
+};
+
+function getEasterSunday(year) {
+  const a = year % 19, b = Math.floor(year/100), c = year%100;
+  const d = Math.floor(b/4), e = b%4, f = Math.floor((b+8)/25);
+  const g = Math.floor((b-f+1)/3);
+  const h = (19*a+b-d-g+15)%30;
+  const i = Math.floor(c/4), k = c%4;
+  const l = (32+2*e+2*i-h-k)%7;
+  const m = Math.floor((a+11*h+22*l)/451);
+  const month = Math.floor((h+l-7*m+114)/31);
+  const day = ((h+l-7*m+114)%31)+1;
+  return new Date(year, month-1, day);
+}
+
+function getVariableHolidays(year) {
+  const easter = getEasterSunday(year);
+  const goodFriday = new Date(easter); goodFriday.setDate(easter.getDate()-2);
+  const corpus = new Date(easter); corpus.setDate(easter.getDate()+60);
+  return [
+    { date: goodFriday, name: 'Sexta-feira Santa' },
+    { date: easter,     name: 'Páscoa' },
+    { date: corpus,     name: 'Corpo de Deus' },
+  ];
+}
+
+function getHolidayName(date) {
+  const key = `${date.getMonth()+1}-${date.getDate()}`;
+  if (FIXED_HOLIDAYS[key]) return FIXED_HOLIDAYS[key];
+  for (const h of getVariableHolidays(date.getFullYear())) {
+    if (h.date.getMonth()===date.getMonth() && h.date.getDate()===date.getDate())
+      return h.name;
+  }
+  return null;
+}
+
+// ─────────────────────────────────────────────
+const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                   'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+let currentYear, currentMonth;
+
+function init() {
+  const now = new Date();
+  currentYear = now.getFullYear();
+  currentMonth = now.getMonth();
+  render();
+}
+
+let slideDirection = null;
+
+function changeMonth(delta) {
+  slideDirection = delta > 0 ? 'right' : 'left';
+  currentMonth += delta;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  if (currentMonth < 0)  { currentMonth = 11; currentYear--; }
+  render();
+}
+
+function render() {
+  document.getElementById('monthTitle').textContent =
+    MONTHS_PT[currentMonth] + ' ' + currentYear;
+
+  const grid = document.getElementById('calendarGrid');
+  grid.innerHTML = '';
+
+  // Apply slide animation
+  grid.className = 'grid';
+  if (slideDirection === 'right') grid.classList.add('animate-right');
+  else if (slideDirection === 'left') grid.classList.add('animate-left');
+  slideDirection = null;
+
+  const today = new Date();
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const daysInPrevMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+  // Previous month trailing days
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const d = daysInPrevMonth - i;
+    const date = new Date(currentYear, currentMonth - 1, d);
+    grid.appendChild(createCell(d, date, true, false, false));
+  }
+
+  // Current month
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(currentYear, currentMonth, d);
+    const isToday = (d === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear());
+    const isSunday = date.getDay() === 0;
+    grid.appendChild(createCell(d, date, false, isSunday, isToday));
+  }
+
+  // Next month leading days
+  const totalCells = firstDay + daysInMonth;
+  const remaining = (7 - (totalCells % 7)) % 7;
+  for (let d = 1; d <= remaining; d++) {
+    const date = new Date(currentYear, currentMonth + 1, d);
+    grid.appendChild(createCell(d, date, true, false, false));
+  }
+}
+
+let bannerTimeout = null;
+
+function showBanner(name) {
+  clearTimeout(bannerTimeout);
+  const banner = document.getElementById('holidayBanner');
+  document.getElementById('holidayBannerText').textContent = name;
+  banner.classList.add('visible');
+  bannerTimeout = setTimeout(() => banner.classList.remove('visible'), 4000);
+}
+
+function closeBanner() {
+  clearTimeout(bannerTimeout);
+  document.getElementById('holidayBanner').classList.remove('visible');
+}
+
+function createCell(dayNum, date, isOtherMonth, isSunday, isToday) {
+  const cell = document.createElement('div');
+  cell.className = 'day-cell' + (isOtherMonth ? ' other-month-cell' : '');
+
+  // Day header (number + optional holiday flag)
+  const header = document.createElement('div');
+  header.className = 'day-header';
+
+  const numEl = document.createElement('div');
+  numEl.className = 'day-number' + (isSunday ? ' sunday' : '') + (isOtherMonth ? ' other-month' : '') + (isToday ? ' today' : '');
+  numEl.textContent = dayNum;
+  header.appendChild(numEl);
+
+  // Holiday flag
+  const holidayName = !isOtherMonth ? getHolidayName(date) : null;
+  if (holidayName) {
+    const flag = document.createElement('span');
+    flag.className = 'holiday-flag';
+    flag.textContent = '🇵🇹';
+    header.appendChild(flag);
+    cell.style.background = '#fffbf0';
+    cell.classList.add('has-holiday');
+    cell.addEventListener('click', () => showBanner(holidayName));
+  }
+
+  cell.appendChild(header);
+
+  // Tags
+  const tags = getTagsForDate(date);
+  tags.forEach(tag => {
+    const t = document.createElement('div');
+    t.className = 'tag ' + tag + (isOtherMonth ? ' empty-month' : '');
+    t.textContent = tag === 'pai' ? 'Pai' : 'Mãe';
+    cell.appendChild(t);
+  });
+
+  return cell;
+}
+
+init();
+
+// ─── Swipe — passive only, compatível com Safari iOS ─────
+(function() {
+  const cal = document.querySelector('.calendar');
+  let startX = 0, startY = 0, tracking = false;
+  const THRESHOLD = 40;
+
+  cal.addEventListener('touchstart', function(e) {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    tracking = true;
+  }, { passive: true });
+
+  cal.addEventListener('touchend', function(e) {
+    if (!tracking) return;
+    tracking = false;
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > THRESHOLD) {
+      changeMonth(dx < 0 ? 1 : -1);
+    }
+  }, { passive: true });
+
+  cal.addEventListener('touchcancel', function() {
+    tracking = false;
+  }, { passive: true });
+})();
+
+
+</script>
+</body>
+</html>
