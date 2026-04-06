@@ -325,20 +325,20 @@
 var REFERENCE_DATE = new Date(2026, 3, 26);
 
 var CYCLE = [
-  ['mae','pai'],
-  ['mae','pai'],
-  ['pai'],
-  ['pai','mae'],
-  ['mae'],
-  ['mae','pai'],
-  ['pai'],
-  ['pai'],
-  ['pai','mae'],
-  ['mae'],
-  ['mae','pai'],
-  ['pai'],
-  ['pai','mae'],
-  ['mae']
+  ['mae'],       // 0: Dom alternado (só Mãe)
+  ['mae','pai'], // 1
+  ['pai'],       // 2
+  ['pai','mae'], // 3
+  ['mae'],       // 4
+  ['mae','pai'], // 5
+  ['pai'],       // 6
+  ['pai'],       // 7
+  ['pai','mae'], // 8
+  ['mae'],       // 9
+  ['mae','pai'], // 10
+  ['pai'],       // 11
+  ['pai','mae'], // 12
+  ['mae']        // 13
 ];
 
 function getTagsForDate(date) {
