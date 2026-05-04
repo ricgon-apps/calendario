@@ -126,8 +126,8 @@
   .day-cell {
     border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
-    padding: 6px 4px 8px;
-    min-height: 80px;
+    padding: 6px 4px 6px;
+    min-height: 88px;
     display: flex;
     flex-direction: column;
     gap: 3px;
@@ -135,6 +135,27 @@
   .day-cell:nth-child(7n) { border-right: none; }
   .day-cell.other-month   { background: #fafaf8; }
   .day-cell.has-holiday   { background: #fffbf0; cursor: pointer; }
+
+  .custody-tags {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+  }
+
+  .vacation-row {
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+    margin-top: auto;
+    padding-top: 2px;
+    min-height: 20px;
+  }
+  .vacation-row .tag {
+    flex: 1;
+    font-size: 10px;
+    padding: 2px 2px;
+  }
 
   .day-header {
     display: flex;
@@ -164,6 +185,8 @@
   }
   .tag.pai { background: var(--pai); color: #fff; }
   .tag.mae { background: var(--mae); color: #fff; }
+  .tag.fm  { background: #a78bfa; color: #fff; }
+  .tag.fp  { background: #f59e0b; color: #fff; }
   .tag.faded { opacity: 0.18; }
 
   /* Holiday banner */
@@ -284,6 +307,14 @@
       <div class="legend-dot" style="background:var(--pai)"></div>
       <span>Pai</span>
     </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#a78bfa"></div>
+      <span>F.M&#227;e</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#f59e0b"></div>
+      <span>F.Pai</span>
+    </div>
   </div>
 
   <div class="calendar">
@@ -348,6 +379,40 @@ function getTagsForDate(date) {
   var diff = Math.round((dateMs - refMs) / msDay);
   var idx = ((diff % 14) + 14) % 14;
   return CYCLE[idx];
+}
+
+// Férias — chave: 'YYYY-M-D'
+var VACATION_FM = {
+  // Junho 2026
+  '2026-6-22':1,'2026-6-23':1,'2026-6-24':1,'2026-6-25':1,'2026-6-26':1,
+  // Julho 2026
+  '2026-7-17':1,'2026-7-18':1,'2026-7-19':1,'2026-7-20':1,'2026-7-21':1,
+  '2026-7-22':1,'2026-7-23':1,'2026-7-24':1,'2026-7-25':1,'2026-7-26':1,
+  // Agosto 2026
+  '2026-8-22':1,'2026-8-23':1,'2026-8-24':1,'2026-8-25':1,'2026-8-26':1,
+  '2026-8-27':1,'2026-8-28':1,'2026-8-29':1,'2026-8-30':1,'2026-8-31':1,
+  // Setembro 2026
+  '2026-9-7':1,'2026-9-8':1,'2026-9-9':1,'2026-9-10':1,'2026-9-11':1
+};
+
+var VACATION_FP = {
+  // Junho 2026
+  '2026-6-5':1,'2026-6-6':1,'2026-6-7':1,'2026-6-8':1,'2026-6-9':1,
+  '2026-6-10':1,'2026-6-11':1,'2026-6-12':1,'2026-6-13':1,'2026-6-14':1,
+  // Julho 2026
+  '2026-7-27':1,'2026-7-28':1,'2026-7-29':1,'2026-7-30':1,'2026-7-31':1,
+  // Agosto 2026
+  '2026-8-12':1,'2026-8-13':1,'2026-8-14':1,'2026-8-15':1,'2026-8-16':1,
+  '2026-8-17':1,'2026-8-18':1,'2026-8-19':1,'2026-8-20':1,'2026-8-21':1,
+  // Setembro 2026
+  '2026-9-1':1,'2026-9-2':1,'2026-9-3':1,'2026-9-4':1,'2026-9-5':1
+};
+
+function getVacationTag(date) {
+  var key = date.getFullYear() + '-' + (date.getMonth()+1) + '-' + date.getDate();
+  if (VACATION_FM[key]) return 'fm';
+  if (VACATION_FP[key]) return 'fp';
+  return null;
 }
 
 var FIXED_HOLIDAYS = {
@@ -479,12 +544,30 @@ function makeCell(dayNum, date, isOther, isToday) {
 
   cell.appendChild(header);
 
+  // Custody tags wrapper
+  var custodyDiv = document.createElement('div');
+  custodyDiv.className = 'custody-tags';
   var tags = getTagsForDate(date);
   for (var i=0; i<tags.length; i++) {
     var t = document.createElement('div');
     t.className = 'tag ' + tags[i] + (isOther ? ' faded' : '');
     t.textContent = tags[i] === 'pai' ? 'Pai' : 'M\u00e3e';
-    cell.appendChild(t);
+    custodyDiv.appendChild(t);
+  }
+  cell.appendChild(custodyDiv);
+
+  // Vacation row — sempre presente para alinhar todas as células
+  if (!isOther) {
+    var vrow = document.createElement('div');
+    vrow.className = 'vacation-row';
+    var vtag = getVacationTag(date);
+    if (vtag) {
+      var vt = document.createElement('div');
+      vt.className = 'tag ' + vtag;
+      vt.textContent = vtag === 'fm' ? 'F.M\u00e3e' : 'F.Pai';
+      vrow.appendChild(vt);
+    }
+    cell.appendChild(vrow);
   }
 
   return cell;
