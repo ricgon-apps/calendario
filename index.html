@@ -415,6 +415,50 @@ function getVacationTag(date) {
   return null;
 }
 
+// Aniversários — chave: 'M-D'
+var BIRTHDAYS = {
+  '1-22': 'M\u00e3e',
+  '1-2':  'Av\u00f3',
+  '1-1':  'Av\u00f4',
+  '5-19': 'Tio',
+  '5-18': 'Meninos',
+  '10-15':'Tia',
+  '1-27': 'Primo',
+  '7-2':  'Primo'
+};
+
+function addIconListener(el, message) {
+  el.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    showBanner(message);
+  }, { passive: false });
+  el.addEventListener('click', function(e) {
+    e.stopPropagation();
+    showBanner(message);
+  });
+}
+
+function getBirthdayName(date) {
+  var key = (date.getMonth()+1) + '-' + date.getDate();
+  return BIRTHDAYS[key] || null;
+}
+
+// Dias especiais
+function getSpecialDay(date) {
+  var m = date.getMonth()+1;
+  var d = date.getDate();
+  var dow = date.getDay();
+
+  // Dia do Pai — 19 de Março
+  if (m === 3 && d === 19) return { icon: '\uD83D\uDC68\u200D\uD83E\uDDB2', label: 'Dia do Pai' };
+
+  // Dia da Mãe — primeiro domingo de Maio
+  if (m === 5 && dow === 0 && d <= 7) return { icon: '\uD83D\uDC69\uD83C\uDFFB', label: 'Dia da M\u00e3e' };
+
+  return null;
+}
+
 var FIXED_HOLIDAYS = {
   '1-1':   'Ano Novo',
   '4-25':  'Dia da Liberdade',
@@ -518,9 +562,6 @@ function makeCell(dayNum, date, isOther, isToday) {
   var hName = isOther ? null : getHolidayName(date);
   if (hName) {
     cell.className += ' has-holiday';
-    (function(name) {
-      cell.addEventListener('click', function() { showBanner(name); });
-    })(hName);
   }
 
   var header = document.createElement('div');
@@ -539,7 +580,31 @@ function makeCell(dayNum, date, isOther, isToday) {
     var flag = document.createElement('span');
     flag.className = 'holiday-flag';
     flag.textContent = '\uD83C\uDDF5\uD83C\uDDF9';
+    flag.style.cursor = 'pointer';
+    addIconListener(flag, '\uD83C\uDDF5\uD83C\uDDF9 ' + hName);
     header.appendChild(flag);
+  }
+
+  var bName = isOther ? null : getBirthdayName(date);
+  if (bName) {
+    var cake = document.createElement('span');
+    cake.className = 'holiday-flag';
+    cake.textContent = '\uD83C\uDF82';
+    cake.style.cursor = 'pointer';
+    addIconListener(cake, '\uD83C\uDF82 Anivers\u00e1rio de ' + bName);
+    header.appendChild(cake);
+    cell.classList.add('has-holiday');
+  }
+
+  var special = isOther ? null : getSpecialDay(date);
+  if (special) {
+    var sicon = document.createElement('span');
+    sicon.className = 'holiday-flag';
+    sicon.textContent = special.icon;
+    sicon.style.cursor = 'pointer';
+    addIconListener(sicon, special.icon + ' ' + special.label);
+    header.appendChild(sicon);
+    cell.classList.add('has-holiday');
   }
 
   cell.appendChild(header);
@@ -574,8 +639,12 @@ function makeCell(dayNum, date, isOther, isToday) {
 }
 
 var bannerTimer = null;
+var bannerLock = false;
 
 function showBanner(name) {
+  if (bannerLock) return;
+  bannerLock = true;
+  setTimeout(function() { bannerLock = false; }, 300);
   clearTimeout(bannerTimer);
   document.getElementById('holidayBannerText').textContent = name;
   document.getElementById('holidayBanner').className = 'holiday-banner visible';
