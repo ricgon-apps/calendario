@@ -332,7 +332,7 @@
 </div>
 
 <div class="holiday-banner" id="holidayBanner">
-  <span>&#127477;&#127481;</span>
+  <span id="holidayBannerIcon"></span>
   <span id="holidayBannerText"></span>
   <span class="banner-close" onclick="closeBanner()">&#10005;</span>
 </div>
@@ -427,15 +427,19 @@ var BIRTHDAYS = {
   '7-2':  'Primo'
 };
 
-function addIconListener(el, message) {
+function addIconListener(el, icon, text) {
+  var fired = false;
   el.addEventListener('touchend', function(e) {
     e.preventDefault();
     e.stopPropagation();
-    showBanner(message);
+    fired = true;
+    showBanner(icon, text);
+    setTimeout(function() { fired = false; }, 500);
   }, { passive: false });
   el.addEventListener('click', function(e) {
     e.stopPropagation();
-    showBanner(message);
+    if (fired) return;
+    showBanner(icon, text);
   });
 }
 
@@ -581,7 +585,7 @@ function makeCell(dayNum, date, isOther, isToday) {
     flag.className = 'holiday-flag';
     flag.textContent = '\uD83C\uDDF5\uD83C\uDDF9';
     flag.style.cursor = 'pointer';
-    addIconListener(flag, '\uD83C\uDDF5\uD83C\uDDF9 ' + hName);
+    addIconListener(flag, '\uD83C\uDDF5\uD83C\uDDF9', hName);
     header.appendChild(flag);
   }
 
@@ -591,7 +595,7 @@ function makeCell(dayNum, date, isOther, isToday) {
     cake.className = 'holiday-flag';
     cake.textContent = '\uD83C\uDF82';
     cake.style.cursor = 'pointer';
-    addIconListener(cake, '\uD83C\uDF82 Anivers\u00e1rio de ' + bName);
+    addIconListener(cake, '\uD83C\uDF82', 'Anivers\u00e1rio de ' + bName);
     header.appendChild(cake);
     cell.classList.add('has-holiday');
   }
@@ -602,7 +606,7 @@ function makeCell(dayNum, date, isOther, isToday) {
     sicon.className = 'holiday-flag';
     sicon.textContent = special.icon;
     sicon.style.cursor = 'pointer';
-    addIconListener(sicon, special.icon + ' ' + special.label);
+    addIconListener(sicon, special.icon, special.label);
     header.appendChild(sicon);
     cell.classList.add('has-holiday');
   }
@@ -638,15 +642,13 @@ function makeCell(dayNum, date, isOther, isToday) {
   return cell;
 }
 
-var bannerTimer = null;
-var bannerLock = false;
-
-function showBanner(name) {
+function showBanner(icon, text) {
   if (bannerLock) return;
   bannerLock = true;
-  setTimeout(function() { bannerLock = false; }, 300);
+  setTimeout(function() { bannerLock = false; }, 500);
   clearTimeout(bannerTimer);
-  document.getElementById('holidayBannerText').textContent = name;
+  document.getElementById('holidayBannerIcon').textContent = icon;
+  document.getElementById('holidayBannerText').textContent = text;
   document.getElementById('holidayBanner').className = 'holiday-banner visible';
   bannerTimer = setTimeout(closeBanner, 4000);
 }
