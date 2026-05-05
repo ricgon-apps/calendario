@@ -428,17 +428,8 @@ var BIRTHDAYS = {
 };
 
 function addIconListener(el, icon, text) {
-  var fired = false;
-  el.addEventListener('touchend', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    fired = true;
-    showBanner(icon, text);
-    setTimeout(function() { fired = false; }, 500);
-  }, { passive: false });
   el.addEventListener('click', function(e) {
     e.stopPropagation();
-    if (fired) return;
     showBanner(icon, text);
   });
 }
@@ -645,13 +636,16 @@ function makeCell(dayNum, date, isOther, isToday) {
 function showBanner(icon, text) {
   if (bannerLock) return;
   bannerLock = true;
-  setTimeout(function() { bannerLock = false; }, 500);
+  setTimeout(function() { bannerLock = false; }, 600);
   clearTimeout(bannerTimer);
   document.getElementById('holidayBannerIcon').textContent = icon;
   document.getElementById('holidayBannerText').textContent = text;
   document.getElementById('holidayBanner').className = 'holiday-banner visible';
   bannerTimer = setTimeout(closeBanner, 4000);
 }
+
+var bannerTimer = null;
+var bannerLock = false;
 
 function closeBanner() {
   clearTimeout(bannerTimer);
